@@ -296,8 +296,9 @@ LOG_DIR="$HOME/.$APPNAME"
 AUTO_DELETE_LOG="1"
 EXPIRATION_STRATEGY="1:1 30:7 365:30"
 AUTO_EXPIRE="1"
+## --perms --owner --group remove form flags
+RSYNC_FLAGS="-D --numeric-ids --links --hard-links --one-file-system --itemize-changes --times --recursive --stats --human-readable"
 
-RSYNC_FLAGS="-D --numeric-ids --links --hard-links --one-file-system --itemize-changes --times --recursive --perms --owner --group --stats --human-readable"
 MAX_BACKUPS="10"
 
 while :; do
