@@ -1,5 +1,13 @@
-# Rsync time backup
+## Rsync time backup
 
+**THAT IS A FORK OF [ORIGINAL PACKAGE](https://github.com/laurent22/rsync-time-backup)** 
+
+A lot of thanks for code.
+
+# CHANGES
+- Expiring strategies 
+
+# ORIGINAL PACKAGE
 This script offers Time Machine-style backup using rsync. It creates incremental backups of files and directories to the destination of your choice. The backups are structured in a way that makes it easy to recover any file at any point in time.
 
 It works on Linux, macOS and Windows (via WSL or Cygwin). The main advantage over Time Machine is the flexibility as it can backup from/to any filesystem and works on any platform. You can also backup, for example, to a Truecrypt drive without any problem.
