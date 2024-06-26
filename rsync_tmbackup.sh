@@ -38,6 +38,15 @@ fn_prune_backups() {
         local oldest_backup=$(fn_find_backups | tail -n 1)
         fn_log_info "Pruning oldest backup: $oldest_backup"
         fn_expire_backup "$oldest_backup"
+
+        # Verificar y corregir permisos después de eliminar un backup
+        local parent_dir=$(dirname "$oldest_backup")
+        fn_run_cmd "chmod 700 -- '$parent_dir'"
+        if [ $? -ne 0 ]; then
+            fn_log_error "Failed to set permissions on parent directory: $parent_dir"
+            exit 1
+        fi
+
         backup_count=$(fn_find_backups | wc -l)
     done
 }
@@ -244,7 +253,15 @@ fn_get_absolute_path() {
 }
 
 fn_mkdir() {
-        fn_run_cmd "mkdir -p -- '$1'"
+    fn_run_cmd "mkdir -p -- '$1'" || {
+        fn_log_error "Failed to create directory: $1"
+        exit 1
+    }
+    # Establecer permisos correctos
+    fn_run_cmd "chmod 700 -- '$1'" || {
+        fn_log_error "Failed to set permissions on directory: $1"
+        exit 1
+    }
 }
 
 # Removes a file or symlink - not for directories
@@ -253,7 +270,10 @@ fn_rm_file() {
 }
 
 fn_rm_dir() {
-        fn_run_cmd "rm -rf -- '$1'"
+        fn_run_cmd "rm -rf -- '$1'" || {
+                fn_log_error "Failed to remove directory: $1"
+                exit 1
+        }
 }
 
 fn_touch() {
