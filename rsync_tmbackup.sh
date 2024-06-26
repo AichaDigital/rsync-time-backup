@@ -67,7 +67,7 @@ fn_display_usage() {
         echo " --no-auto-expire       Disable automatically deleting backups when out of space. Instead an error"
         echo "                        is logged, and the backup is aborted."
         echo " -m, --max_backups N    Specify the maximum number of backups (default: 10)."
-        echo "                        After this script prune backups."
+        echo "                        After this number of backups, script prune backups."
         echo ""
         echo "For more detailed help, please see the README file:"
         echo ""
@@ -317,7 +317,7 @@ while :; do
                         ;;
                 -m|--max_backups)
                         shift
-                        MAX_BACKUPS="$1"
+                        MAX_BACKUPS=$1
                         ;;
                 --rsync-get-flags)
                         shift

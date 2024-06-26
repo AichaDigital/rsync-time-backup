@@ -2,10 +2,26 @@
 
 **THAT IS A FORK OF [ORIGINAL PACKAGE](https://github.com/laurent22/rsync-time-backup)** 
 
+**It works for me and is here for you to use if you want, but you are solely responsible for testing, verifying, and using it.**
+
 A lot of thanks for code.
 
 # CHANGES
 - Expiring strategies 
+
+## Expiring strategies
+Option `-m|--max_backup N` 
+
+Specify the maximum number of backups (default: 10). After this number of backups, script prune backups
+
+## Default options
+After a series of issues and errors that I hadn't been able to solve for a while, I realized that `RSYNC_FLAGS="-D --numeric-ids --links --hard-links --one-file-system --itemize-changes --times --recursive --perms --owner --group --stats --human-readable"` was not compatible with additional options passed as `--rsync-set-flags`. 
+Options like `--no-perms, --no-owner --no-group` were failing, which in a non-root user backup environment, as is my case, was not useful due to the multiple problems they caused. 
+Therefore, it was necessary to use `--rsync-append-flags` and eliminate them from that variable.
+
+> My full system backup strategy does not attempt a 100% restore. When I need that, I have another backup strategy where I generate metadata with the data of all the directories and files in the backup along with their original permissions and owners.
+
+
 
 # ORIGINAL PACKAGE
 This script offers Time Machine-style backup using rsync. It creates incremental backups of files and directories to the destination of your choice. The backups are structured in a way that makes it easy to recover any file at any point in time.
@@ -77,7 +93,7 @@ On macOS, it has a few disadvantages compared to Time Machine - in particular it
 
 		rsync_tmbackup.sh user@example.com:/home /mnt/backup_drive
 
-* To mimic Time Machine's behaviour, a cron script can be setup to backup at regular interval. For example, the following cron job checks if the drive "/mnt/backup" is currently connected and, if it is, starts the backup. It does this check every 1 hour.
+* To mimic Time Machine's behavior, a cron script can be setup to backup at regular interval. For example, the following cron job checks if the drive "/mnt/backup" is currently connected and, if it is, starts the backup. It does this check every 1 hour.
 		
 		0 */1 * * * if grep -qs /mnt/backup /proc/mounts; then rsync_tmbackup.sh /home /mnt/backup; fi
 
@@ -107,12 +123,12 @@ To display the rsync options that are used for backup, run `./rsync_tmbackup.sh 
 
 ## No automatic backup expiration
 
-An option to disable the default behaviour to purge old backups when out of space. This option is set with the `--no-auto-expire` flag.
+An option to disable the default behavior to purge old backups when out of space. This option is set with the `--no-auto-expire` flag.
 	
 	
 ## How to restore
 
-The script creates a backup in a regular directory so you can simply copy the files back to the original directory. You could do that with something like `rsync -aP /path/to/last/backup/ /path/to/restore/to/`. Consider using the `--dry-run` option to check what exactly is going to be copied. Use `--delete` if you also want to delete files that exist in the destination but not in the backup (obviously extra care must be taken when using this option).
+The script creates a backup in a regular directory so you can copy the files back to the original directory. You could do that with something like `rsync -aP /path/to/last/backup/ /path/to/restore/to/`. Consider using the `--dry-run` option to check what exactly is going to be copied. Use `--delete` if you also want to delete files that exist in the destination but not in the backup (extra care must be taken when using this option).
 
 ## Extensions
 
