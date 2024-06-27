@@ -296,6 +296,27 @@ fn_df_t() {
         fn_run_cmd "df -T '${1}'"
 }
 
+# Function to set permissions on the last used directory
+fn_fix_permissions() {
+    local base_dir="$1"
+
+    fn_log_info "Fixing permissions in directory: $base_dir"
+
+    # Buscar y cambiar permisos de directorios con 000 a 700
+    find "$base_dir" -type d -perm 000 -exec chmod 700 {} \; || {
+        fn_log_error "Failed to set permissions on some directories"
+        exit 1
+    }
+
+    # Buscar y cambiar permisos de archivos con 000 a 600
+    find "$base_dir" -type f -perm 000 -exec chmod 600 {} \; || {
+        fn_log_error "Failed to set permissions on some files"
+        exit 1
+    }
+
+    fn_log_info "Permissions fixed successfully"
+}
+
 # -----------------------------------------------------------------------------
 # Source and destination information
 # -----------------------------------------------------------------------------
@@ -679,6 +700,10 @@ while : ; do
 
                 # Remove .inprogress file only when rsync succeeded
                 fn_rm_file "$INPROGRESS_FILE"
+
+                ultimo_directorio="$DEST_FOLDER/$(basename -- "$DEST")"
+                fn_log_info "Check permissions on $ultimo_directorio"
+                fn_fix_permissions "$ultimo_directorio"
         fi
 
         exit $EXIT_CODE
