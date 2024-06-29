@@ -302,14 +302,18 @@ fn_fix_permissions() {
 
     fn_log_info "Fixing permissions in directory: $base_dir"
 
+    find "$base_dir" -type d -perm 0111 -exec sudo chmod 700 {} \; || {
+        fn_log_error "Failed to set permissions on some directories"
+        exit 1
+    }
     # Buscar y cambiar permisos de directorios con 000 a 700
-    find "$base_dir" -type d -perm 000 -exec chmod 700 {} \; || {
+    find "$base_dir" -type d -perm 000 -exec sudo chmod 700 {} \; || {
         fn_log_error "Failed to set permissions on some directories"
         exit 1
     }
 
     # Buscar y cambiar permisos de archivos con 000 a 600
-    find "$base_dir" -type f -perm 000 -exec chmod 600 {} \; || {
+    find "$base_dir" -type f -perm 000 -exec sudo chmod 600 {} \; || {
         fn_log_error "Failed to set permissions on some files"
         exit 1
     }
