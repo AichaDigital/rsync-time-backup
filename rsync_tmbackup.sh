@@ -77,6 +77,7 @@ fn_display_usage() {
         echo "                        is logged, and the backup is aborted."
         echo " -m, --max_backups N    Specify the maximum number of backups (default: 10)."
         echo "                        After this number of backups, script prune backups."
+        echo " --no-sudo              script has not run sudo"
         echo ""
         echo "For more detailed help, please see the README file:"
         echo ""
@@ -302,21 +303,33 @@ fn_fix_permissions() {
 
     fn_log_info "Fixing permissions in directory: $base_dir"
 
-    find "$base_dir" -type d -perm 0111 -exec chmod 700 {} \; || {
-        fn_log_error "Failed to set permissions on some directories"
-        exit 1
-    }
-    # Buscar y cambiar permisos de directorios con 000 a 700
-    find "$base_dir" -type d -perm 000 -exec chmod 700 {} \; || {
-        fn_log_error "Failed to set permissions on some directories"
-        exit 1
-    }
-
-    # Buscar y cambiar permisos de archivos con 000 a 600
-    find "$base_dir" -type f -perm 000 -exec chmod 600 {} \; || {
-        fn_log_error "Failed to set permissions on some files"
-        exit 1
-    }
+    if [ "$SUDO" = true ]; then
+            find "$base_dir" -type d -perm 0111 -exec sudo chmod 700 {} \; || {
+                fn_log_error "Failed to set permissions on some directories"
+                exit 1
+            }
+            find "$base_dir" -type d -perm 000 -exec sudo chmod 700 {} \; || {
+                fn_log_error "Failed to set permissions on some directories"
+                exit 1
+            }
+            find "$base_dir" -type f -perm 000 -exec sudo chmod 600 {} \; || {
+                fn_log_error "Failed to set permissions on some files"
+                exit 1
+            }
+        else
+            find "$base_dir" -type d -perm 0111 -exec chmod 700 {} \; || {
+                fn_log_error "Failed to set permissions on some directories"
+                exit 1
+            }
+            find "$base_dir" -type d -perm 000 -exec chmod 700 {} \; || {
+                fn_log_error "Failed to set permissions on some directories"
+                exit 1
+            }
+            find "$base_dir" -type f -perm 000 -exec chmod 600 {} \; || {
+                fn_log_error "Failed to set permissions on some files"
+                exit 1
+            }
+        fi
 
     fn_log_info "Permissions fixed successfully"
 }
@@ -345,6 +358,7 @@ AUTO_EXPIRE="1"
 RSYNC_FLAGS="-D --numeric-ids --links --hard-links --one-file-system --itemize-changes --times --recursive --stats --human-readable"
 
 MAX_BACKUPS="10"
+SUDO=false
 
 while :; do
         case $1 in
@@ -389,6 +403,10 @@ while :; do
                 --no-auto-expire)
                         AUTO_EXPIRE="0"
                         ;;
+                --no-sudo)
+                      shift
+                      SUDO=true
+                      ;;
                 --)
                         shift
                         SRC_FOLDER="$1"
