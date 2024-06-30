@@ -77,7 +77,7 @@ fn_display_usage() {
         echo "                        is logged, and the backup is aborted."
         echo " -m, --max_backups N    Specify the maximum number of backups (default: 10)."
         echo "                        After this number of backups, script prune backups."
-        echo " --no-sudo              script has not run sudo"
+        echo " --sudo              script has not run sudo"
         echo ""
         echo "For more detailed help, please see the README file:"
         echo ""
