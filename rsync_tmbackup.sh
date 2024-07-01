@@ -41,10 +41,10 @@ fn_prune_backups() {
 
         # Verificar y corregir permisos después de eliminar un backup
         local parent_dir=$(dirname "$oldest_backup")
-        fn_run_cmd "chmod 700 -- '$parent_dir'"
-        if [ $? -ne 0 ]; then
-            fn_log_error "Failed to set permissions on parent directory: $parent_dir"
-            exit 1
+        fn_run_cmd "chmod 700 '$parent_dir'"
+        if ! fn_run_cmd "chmod 700 '$parent_dir'"; then
+          fn_log_error "Failed to set permissions on parent directory: $parent_dir"
+          exit 1
         fi
 
         backup_count=$(fn_find_backups | wc -l)
@@ -111,7 +111,7 @@ fn_find_backups() {
 fn_expire_backup() {
         # Double-check that we're on a backup destination to be completely
         # sure we're deleting the right folder
-        if [ -z "$(fn_find_backup_marker "$(dirname -- "$1")")" ]; then
+        if [ -z "$(fn_find_backup_marker "$(dirname "$1")")" ]; then
                 fn_log_error "$1 is not on a backup destination - aborting."
                 exit 1
         fi
@@ -254,35 +254,36 @@ fn_get_absolute_path() {
 }
 
 fn_mkdir() {
-    fn_run_cmd "mkdir -p -- '$1'" || {
+    if ! fn_run_cmd "mkdir -p '$1'"; then
         fn_log_error "Failed to create directory: $1"
         exit 1
-    }
+    fi
     # Establecer permisos correctos
-    fn_run_cmd "chmod 700 -- '$1'" || {
+    if ! fn_run_cmd "chmod 700 '$1'"; then
         fn_log_error "Failed to set permissions on directory: $1"
         exit 1
-    }
+    fi
 }
+
 
 # Removes a file or symlink - not for directories
 fn_rm_file() {
-        fn_run_cmd "rm -f -- '$1'"
+        fn_run_cmd "rm -f '$1'"
 }
 
 fn_rm_dir() {
-        fn_run_cmd "rm -rf -- '$1'" || {
-                fn_log_error "Failed to remove directory: $1"
-                exit 1
-        }
+    if ! fn_run_cmd "rm -rf '$1'"; then
+        fn_log_error "Failed to remove directory: $1"
+        exit 1
+    fi
 }
 
 fn_touch() {
-        fn_run_cmd "touch -- '$1'"
+        fn_run_cmd "touch '$1'"
 }
 
 fn_ln() {
-        fn_run_cmd "ln -s -- '$1' '$2'"
+        fn_run_cmd "ln -s '$1' '$2'"
 }
 
 fn_test_file_exists_src() {
@@ -304,32 +305,32 @@ fn_fix_permissions() {
     fn_log_info "Fixing permissions in directory: $base_dir"
 
     if [ "$SUDO" = true ]; then
-            find "$base_dir" -type d -perm 0111 -exec sudo chmod 700 {} \; || {
-                fn_log_error "Failed to set permissions on some directories"
-                exit 1
-            }
-            find "$base_dir" -type d -perm 000 -exec sudo chmod 700 {} \; || {
-                fn_log_error "Failed to set permissions on some directories"
-                exit 1
-            }
-            find "$base_dir" -type f -perm 000 -exec sudo chmod 600 {} \; || {
-                fn_log_error "Failed to set permissions on some files"
-                exit 1
-            }
-        else
-            find "$base_dir" -type d -perm 0111 -exec chmod 700 {} \; || {
-                fn_log_error "Failed to set permissions on some directories"
-                exit 1
-            }
-            find "$base_dir" -type d -perm 000 -exec chmod 700 {} \; || {
-                fn_log_error "Failed to set permissions on some directories"
-                exit 1
-            }
-            find "$base_dir" -type f -perm 000 -exec chmod 600 {} \; || {
-                fn_log_error "Failed to set permissions on some files"
-                exit 1
-            }
+        if ! find "$base_dir" -type d -perm 0111 -exec sudo chmod 700 {} \;; then
+            fn_log_error "Failed to set permissions on some directories"
+            exit 1
         fi
+        if ! find "$base_dir" -type d -perm 000 -exec sudo chmod 700 {} \;; then
+            fn_log_error "Failed to set permissions on some directories"
+            exit 1
+        fi
+        if ! find "$base_dir" -type f -perm 000 -exec sudo chmod 600 {} \;; then
+            fn_log_error "Failed to set permissions on some files"
+            exit 1
+        fi
+    else
+        if ! find "$base_dir" -type d -perm 0111 -exec chmod 700 {} \;; then
+            fn_log_error "Failed to set permissions on some directories"
+            exit 1
+        fi
+        if ! find "$base_dir" -type d -perm 000 -exec chmod 700 {} \;; then
+            fn_log_error "Failed to set permissions on some directories"
+            exit 1
+        fi
+        if ! find "$base_dir" -type f -perm 000 -exec chmod 600 {} \;; then
+            fn_log_error "Failed to set permissions on some files"
+            exit 1
+        fi
+    fi
 
     fn_log_info "Permissions fixed successfully"
 }
@@ -483,7 +484,7 @@ if [ -z "$(fn_find_backup_marker "$DEST_FOLDER")" ]; then
         fn_log_info "Safety check failed - the destination does not appear to be a backup folder or drive (marker file not found)."
         fn_log_info "If it is indeed a backup folder, you may add the marker file by running the following command:"
         fn_log_info ""
-        fn_log_info_cmd "mkdir -p -- \"$DEST_FOLDER\" ; touch \"$(fn_backup_marker_path "$DEST_FOLDER")\""
+        fn_log_info_cmd "mkdir -p \"$DEST_FOLDER\" ; touch \"$(fn_backup_marker_path "$DEST_FOLDER")\""
         fn_log_info ""
         exit 1
 fi
@@ -526,7 +527,7 @@ MYPID="$$"
 
 if [ ! -d "$LOG_DIR" ]; then
         fn_log_info "Creating log folder in '$LOG_DIR'..."
-        mkdir -- "$LOG_DIR"
+        mkdir "$LOG_DIR"
 fi
 
 # -----------------------------------------------------------------------------
@@ -568,7 +569,7 @@ if [ -n "$(fn_find "$INPROGRESS_FILE")" ]; then
                 # - Last backup is moved to current backup folder so that it can be resumed.
                 # - 2nd to last backup becomes last backup.
                 fn_log_info "$SSH_DEST_FOLDER_PREFIX$INPROGRESS_FILE already exists - the previous backup failed or was interrupted. Backup will resume from there."
-                fn_run_cmd "mv -- $PREVIOUS_DEST $DEST"
+                fn_run_cmd "mv $PREVIOUS_DEST $DEST"
                 if [ "$(fn_find_backups | wc -l)" -gt 1 ]; then
                         PREVIOUS_DEST="$(fn_find_backups | sed -n '2p')"
                 else
@@ -660,7 +661,7 @@ while : ; do
                 CMD="$CMD --exclude-from '$EXCLUSION_FILE'"
         fi
         CMD="$CMD $LINK_DEST_OPTION"
-        CMD="$CMD -- '$SSH_SRC_FOLDER_PREFIX$SRC_FOLDER/' '$SSH_DEST_FOLDER_PREFIX$DEST/'"
+        CMD="$CMD '$SSH_SRC_FOLDER_PREFIX$SRC_FOLDER/' '$SSH_DEST_FOLDER_PREFIX$DEST/'"
 
         fn_log_info "Running command:"
         fn_log_info "$CMD"
@@ -706,7 +707,7 @@ while : ; do
         else
                 fn_log_info "Backup completed without errors."
                 if [[ $AUTO_DELETE_LOG == "1" ]]; then
-                        rm -f -- "$LOG_FILE"
+                        rm -f "$LOG_FILE"
                 fi
                 EXIT_CODE="0"
         fi
@@ -717,12 +718,12 @@ while : ; do
         if [ "$EXIT_CODE" = 0 ]; then
                 # Create the latest symlink only when rsync succeeded
                 fn_rm_file "$DEST_FOLDER/latest"
-                fn_ln "$(basename -- "$DEST")" "$DEST_FOLDER/latest"
+                fn_ln "$(basename "$DEST")" "$DEST_FOLDER/latest"
 
                 # Remove .inprogress file only when rsync succeeded
                 fn_rm_file "$INPROGRESS_FILE"
 
-                ultimo_directorio="$DEST_FOLDER/$(basename -- "$DEST")"
+                ultimo_directorio="$DEST_FOLDER/$(basename "$DEST")"
                 fn_log_info "Check permissions on $ultimo_directorio"
                 fn_fix_permissions "$ultimo_directorio"
         fi
