@@ -3,3 +3,6 @@ test.sh
 *~
 tests/TestDest/
 tests/TestSource/
+.DS_Store
+**/.DS_Store
+
