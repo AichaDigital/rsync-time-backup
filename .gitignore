@@ -5,4 +5,5 @@ tests/TestDest/
 tests/TestSource/
 .DS_Store
 **/.DS_Store
+MY_DOC.md
 

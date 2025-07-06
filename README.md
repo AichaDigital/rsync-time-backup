@@ -32,6 +32,10 @@ On macOS, it has a few disadvantages compared to Time Machine - in particular it
 
 ## Installation
 
+### This Fork (with expiration enhancements)
+	git clone https://github.com/AichaDigital/rsync-time-backup
+
+### Original Version
 	git clone https://github.com/laurent22/rsync-time-backup
 
 ## Usage
