@@ -1,5 +1,11 @@
 ## Rsync time backup
 
+> **⚠️ PROYECTO MANTENIDO EN GITHUB**: Este proyecto está siendo mantenido activamente en:
+> 
+> **🔗 https://github.com/AichaDigital/rsync-time-backup**
+> 
+> Por favor, utiliza la versión de GitHub para obtener las últimas actualizaciones, reportar issues y contribuir.
+
 **THAT IS A FORK OF [ORIGINAL PACKAGE](https://github.com/laurent22/rsync-time-backup)** 
 
 **It works for me and is here for you to use if you want, but you are solely responsible for testing, verifying, and using it.**
