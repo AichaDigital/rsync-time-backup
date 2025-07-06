@@ -88,6 +88,9 @@ On macOS, it has a few disadvantages compared to Time Machine - in particular it
 
 		rsync_tmbackup.sh -p 2222 /home user@example.com:/mnt/backup_drive
 
+* Backup to remote drive over SSH using a specific private key:
+
+		rsync_tmbackup.sh -i ~/.ssh/my_private_key /home user@example.com:/mnt/backup_drive
 
 * Backup from remote drive over SSH:
 
