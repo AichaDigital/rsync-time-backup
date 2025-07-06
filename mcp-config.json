@@ -1,0 +1,39 @@
+{
+  "mcpServers": {
+    "rsync-backup-files": {
+      "command": "npx",
+      "args": [
+        "@modelcontextprotocol/server-filesystem",
+        "."
+      ],
+      "description": "Archivos del proyecto rsync-time-backup"
+    },
+    "rsync-backup-git": {
+      "command": "uvx",
+      "args": [
+        "mcp-server-git",
+        "--repository",
+        "."
+      ],
+      "description": "Git del proyecto rsync-time-backup"
+    },
+    "context7-remote": {
+      "command": "ssh",
+      "args": [
+        "abkrim@192.168.1.81",
+        "cd ~/mcp-servers/context7 && node node_modules/@upstash/context7-mcp/dist/index.js"
+      ],
+      "description": "Context7 - Documentación actualizada de código (Raspberry Pi)"
+    },
+    "mcp-supermemory-ai": {
+      "command": "npx",
+      "args": [
+          "-y",
+          "supergateway",
+          "--sse",
+          "https://mcp.supermemory.ai/m98Tuf_QRhzgZjxuP5HYY/sse"
+      ],
+      "description": "SuperMemory AI - Memoria extendida para contexto"
+    }
+  }
+}

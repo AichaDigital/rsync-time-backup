@@ -1,0 +1,26 @@
+{
+  "mcpServers": {
+    "context7": {
+      "url": "https://mcp.context7.com/mcp"
+    },
+    "mcp-supermemory-ai": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "supergateway",
+        "--sse",
+        "https://mcp.supermemory.ai/m98Tuf_QRhzgZjxuP5HYY/sse"
+      ]
+    },
+    "rsync-time-backup-files": {
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-filesystem", "."],
+      "description": "Archivos del proyecto rsync-time-backup"
+    },
+    "rsync-time-backup-git": {
+      "command": "uvx",
+      "args": ["mcp-server-git", "--repository", "."],
+      "description": "Git del proyecto rsync-time-backup"
+    }
+  }
+}

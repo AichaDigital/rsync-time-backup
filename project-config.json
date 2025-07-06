@@ -1,0 +1,22 @@
+{
+  "project_name": "rsync-time-backup",
+  "project_path": "/Users/abkrim/rsync-time-backup",
+  "client_type": "claude",
+  "features": {
+    "bash_scripting": true,
+    "backup_system": true,
+    "ssh_support": true,
+    "incremental_backup": true,
+    "expiration_strategies": true
+  },
+  "backup_config": {
+    "default_max_backups": 10,
+    "default_strategy": "1:1 30:7 365:30",
+    "requires_marker": true,
+    "supports_ssh": true
+  },
+  "script_type": "bash",
+  "main_script": "rsync_tmbackup.sh",
+  "created_at": "2025-07-06T07:13:37+02:00",
+  "mcp_isolated": true
+}
