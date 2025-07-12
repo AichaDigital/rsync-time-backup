@@ -14,14 +14,49 @@ Option `-m|--max_backup N`
 
 Specify the maximum number of backups (default: 10). After this number of backups, script prune backups
 
-## Default options
-After a series of issues and errors that I hadn't been able to solve for a while, I realized that `RSYNC_FLAGS="-D --numeric-ids --links --hard-links --one-file-system --itemize-changes --times --recursive --perms --owner --group --stats --human-readable"` was not compatible with additional options passed as `--rsync-set-flags`. 
-Options like `--no-perms, --no-owner --no-group` were failing, which in a non-root user backup environment, as is my case, was not useful due to the multiple problems they caused. 
-Therefore, it was necessary to use `--rsync-append-flags` and eliminate them from that variable.
+## Rsync flags configuration
 
-> My full system backup strategy does not attempt a 100% restore. When I need that, I have another backup strategy where I generate metadata with the data of all the directories and files in the backup along with their original permissions and owners.
+### Default rsync flags
 
+The script uses these default rsync flags for security and efficiency:
 
+```
+"-D --numeric-ids --links --hard-links --one-file-system --itemize-changes --times --recursive --perms --owner --group --stats --human-readable"
+```
+
+### When to use `--rsync-append-flags` vs `--rsync-set-flags`
+
+**Use `--rsync-append-flags`** when you want to **add** additional flags to the default ones:
+
+```bash
+# Example: Add --no-perms --no-owner --no-group to the default flags
+rsync_tmbackup.sh --rsync-append-flags "--no-perms --no-owner --no-group" /home /mnt/backup
+```
+
+**Use `--rsync-set-flags`** when you need to **replace** the default flags completely. This is necessary when you need to remove specific default flags like `--one-file-system`:
+
+```bash
+# Example: Remove --one-file-system to backup across multiple file systems
+rsync_tmbackup.sh --rsync-set-flags "-D --numeric-ids --links --hard-links --itemize-changes --times --recursive --stats --human-readable --no-perms --no-group --no-owner" /home /mnt/backup
+```
+
+### Use case: Backup across multiple file systems
+
+When backing up from a server with multiple file systems, the default `--one-file-system` flag prevents rsync from crossing file system boundaries. To backup across multiple file systems, you must use `--rsync-set-flags` to replace the default flags and exclude `--one-file-system`:
+
+```bash
+/path/rsync-time-backup/rsync_tmbackup.sh -p 2244 -m 60 --rsync-set-flags "-D --numeric-ids --links --hard-links --itemize-changes --times --recursive --stats --human-readable --no-perms --no-group --no-owner" --strategy "1:1 7:7 30:30" root@dfdqn.backup.tld:/ /path/local/rsync /path/local/excludes.txt
+```
+
+### Use case: Non-root user backup
+
+For non-root user backups, you typically want to add `--no-perms --no-owner --no-group` to avoid permission issues, but keep all other default flags:
+
+```bash
+rsync_tmbackup.sh --rsync-append-flags "--no-perms --no-owner --no-group" /home /mnt/backup
+```
+
+> **Note:** My full system backup strategy does not attempt a 100% restore. When I need that, I have another backup strategy where I generate metadata with the data of all the directories and files in the backup along with their original permissions and owners.
 
 # ORIGINAL PACKAGE
 This script offers Time Machine-style backup using rsync. It creates incremental backups of files and directories to the destination of your choice. The backups are structured in a way that makes it easy to recover any file at any point in time.
@@ -124,7 +159,14 @@ The script is designed so that only one backup operation can be active for a giv
 
 ## Rsync options
 
-To display the rsync options that are used for backup, run `./rsync_tmbackup.sh --rsync-get-flags`. It is also possible to add or remove options using the `--rsync-append-flags` or `--rsync-set-flags` option. For example, to exclude backing up permissions and groups:
+To display the rsync options that are used for backup, run `./rsync_tmbackup.sh --rsync-get-flags`. 
+
+You can modify the rsync flags using two different approaches:
+
+* **`--rsync-append-flags`**: Adds flags to the existing defaults (recommended for most cases)
+* **`--rsync-set-flags`**: Completely replaces the default flags (use when you need to remove specific defaults)
+
+For example, to exclude backing up permissions and groups while keeping all other defaults:
 
 	rsync_tmbackup --rsync-append-flags "--no-perms --no-group" /src /dest
 
@@ -171,3 +213,4 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
+
