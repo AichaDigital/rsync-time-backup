@@ -89,6 +89,8 @@ On macOS, it has a few disadvantages compared to Time Machine - in particular it
 	                        not be managed by the script - in particular they will not be
 	                        automatically deleted.
 	                        Default: /home/backuper/.rsync_tmbackup
+	 --log-to-destination   Store logs in the destination folder under .rsync_tmbackup/
+	                        This is useful when you want to keep logs with the backups.
 	 --strategy             Set the expiration strategy. Default: "1:1 30:7 365:30" means after one
 	                        day, keep one backup per day. After 30 days, keep one backup every 7 days.
 	                        After 365 days keep one backup every 30 days.

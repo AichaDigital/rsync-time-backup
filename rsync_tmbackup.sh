@@ -70,6 +70,7 @@ fn_display_usage() {
         echo "                        not be managed by the script - in particular they will not be"
         echo "                        automatically deleted."
         echo "                        Default: $LOG_DIR"
+        echo " --log-to-destination   Store logs in the destination folder under .$APPNAME/"
         echo " --strategy             Set the expiration strategy. Default: \"1:1 30:7 365:30\" means after one"
         echo "                        day, keep one backup per day. After 30 days, keep one backup every 7 days."
         echo "                        After 365 days keep one backup every 30 days."
@@ -353,6 +354,7 @@ DEST_FOLDER=""
 EXCLUSION_FILE=""
 LOG_DIR="$HOME/.$APPNAME"
 AUTO_DELETE_LOG="1"
+LOG_TO_DEST="0"
 EXPIRATION_STRATEGY="1:1 30:7 365:30"
 AUTO_EXPIRE="1"
 ## --perms --owner --group remove form flags
@@ -399,6 +401,10 @@ while :; do
                 --log-dir)
                         shift
                         LOG_DIR="$1"
+                        AUTO_DELETE_LOG="0"
+                        ;;
+                --log-to-destination)
+                        LOG_TO_DEST="1"
                         AUTO_DELETE_LOG="0"
                         ;;
                 --no-auto-expire)
@@ -524,6 +530,10 @@ MYPID="$$"
 # -----------------------------------------------------------------------------
 # Create log folder if it doesn't exist
 # -----------------------------------------------------------------------------
+
+if [[ $LOG_TO_DEST == "1" ]]; then
+        LOG_DIR="$DEST_FOLDER/.$APPNAME"
+fi
 
 if [ ! -d "$LOG_DIR" ]; then
         fn_log_info "Creating log folder in '$LOG_DIR'..."
