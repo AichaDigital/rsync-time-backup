@@ -657,8 +657,14 @@ while : ; do
         CMD="$CMD $RSYNC_FLAGS"
         CMD="$CMD --log-file '$LOG_FILE'"
         if [ -n "$EXCLUSION_FILE" ]; then
-                # We've already checked that $EXCLUSION_FILE doesn't contain a single quote
-                CMD="$CMD --exclude-from '$EXCLUSION_FILE'"
+                # If the exclusions file uses rsync filter rules (+/-), switch to --filter merge
+                if [ -f "$EXCLUSION_FILE" ] && grep -Eq '^[[:space:]]*[+\-][[:space:]]' "$EXCLUSION_FILE"; then
+                        # Use filter-merge to support include/exclude rules in one file
+                        CMD="$CMD --filter 'merge $EXCLUSION_FILE'"
+                else
+                        # Fallback to classic exclude-from (exclude-only patterns)
+                        CMD="$CMD --exclude-from '$EXCLUSION_FILE'"
+                fi
         fi
         CMD="$CMD $LINK_DEST_OPTION"
         CMD="$CMD '$SSH_SRC_FOLDER_PREFIX$SRC_FOLDER/' '$SSH_DEST_FOLDER_PREFIX$DEST/'"

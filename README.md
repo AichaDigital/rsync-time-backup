@@ -1,16 +1,16 @@
 ## Rsync time backup
 
-**THAT IS A FORK OF [ORIGINAL PACKAGE](https://github.com/laurent22/rsync-time-backup)** 
+**THAT IS A FORK OF [ORIGINAL PACKAGE](https://github.com/laurent22/rsync-time-backup)**
 
 **It works for me and is here for you to use if you want, but you are solely responsible for testing, verifying, and using it.**
 
 A lot of thanks for code.
 
 # CHANGES
-- Expiring strategies 
+- Expiring strategies
 
 ## Expiring strategies
-Option `-m|--max_backup N` 
+Option `-m|--max_backup N`
 
 Specify the maximum number of backups (default: 10). After this number of backups, script prune backups
 
@@ -114,13 +114,13 @@ On macOS, it has a few disadvantages compared to Time Machine - in particular it
 * "latest" symlink that points to the latest successful backup.
 
 ## Examples
-	
+
 * Backup the home folder to backup_drive
-	
-		rsync_tmbackup.sh /home /mnt/backup_drive  
+
+		rsync_tmbackup.sh /home /mnt/backup_drive
 
 * Backup with exclusion list:
-	
+
 		rsync_tmbackup.sh /home /mnt/backup_drive excluded_patterns.txt
 
 * Backup to remote drive over SSH, on port 2222:
@@ -136,7 +136,7 @@ On macOS, it has a few disadvantages compared to Time Machine - in particular it
 		rsync_tmbackup.sh user@example.com:/home /mnt/backup_drive
 
 * To mimic Time Machine's behavior, a cron script can be setup to backup at regular interval. For example, the following cron job checks if the drive "/mnt/backup" is currently connected and, if it is, starts the backup. It does this check every 1 hour.
-		
+
 		0 */1 * * * if grep -qs /mnt/backup /proc/mounts; then rsync_tmbackup.sh /home /mnt/backup; fi
 
 ## Backup expiration logic
@@ -153,13 +153,59 @@ Before the first interval (i.e. by default within the first 24h) it is implied t
 
 An optional exclude file can be provided as a third parameter. It should be compatible with the `--exclude-from` parameter of rsync. See [this tutorial](https://web.archive.org/web/20230126121643/https://sites.google.com/site/rsync2u/home/rsync-tutorial/the-exclude-from-option) for more information.
 
+### Include/Exclude filter files (automatic detection)
+
+This fork adds support for rsync filter files that mix include (`+`) and exclude (`-`) rules in the same file.
+
+- If the third parameter file contains lines starting with `+` or `-`, the script automatically uses:
+  - `--filter 'merge <file>'`
+- Otherwise, it falls back to classic:
+  - `--exclude-from '<file>'`
+
+This makes `+` includes work as expected without changing your command.
+
+Guidelines when using filter rules:
+
+- Order matters: rules are evaluated top-to-bottom.
+- Include parent directories before including their children.
+- Finish with a catch-all exclude to avoid unintended copies.
+
+Example: include only `/home`, `/root`, `/etc`, `/usr/local/bin`, and `/mysql_back`, exclude everything else, and skip caches and swap images:
+
+```
+- */cache/*
++ /home/
++ /home/**
++ /root/
++ /root/**
++ /etc/
++ /etc/**
++ /usr/
++ /usr/local/
++ /usr/local/bin/
++ /usr/local/bin/**
+- /usr/**
++ /mysql_back/
++ /mysql_back/**
+- /swapfile
+- /swap.img
+- /backupremote2/
+- /*
+```
+
+Usage stays the same; pass the file as the third argument:
+
+```bash
+./rsync_tmbackup.sh /source/path /destination/path /path/to/excludes.txt
+```
+
 ## Built-in lock
 
 The script is designed so that only one backup operation can be active for a given directory. If a new backup operation is started while another is still active (i.e. it has not finished yet), the new one will be automaticalled interrupted. Thanks to this the use of `flock` to run the script is not necessary.
 
 ## Rsync options
 
-To display the rsync options that are used for backup, run `./rsync_tmbackup.sh --rsync-get-flags`. 
+To display the rsync options that are used for backup, run `./rsync_tmbackup.sh --rsync-get-flags`.
 
 You can modify the rsync flags using two different approaches:
 
@@ -173,8 +219,8 @@ For example, to exclude backing up permissions and groups while keeping all othe
 ## No automatic backup expiration
 
 An option to disable the default behavior to purge old backups when out of space. This option is set with the `--no-auto-expire` flag.
-	
-	
+
+
 ## How to restore
 
 The script creates a backup in a regular directory so you can copy the files back to the original directory. You could do that with something like `rsync -aP /path/to/last/backup/ /path/to/restore/to/`. Consider using the `--dry-run` option to check what exactly is going to be copied. Use `--delete` if you also want to delete files that exist in the destination but not in the backup (extra care must be taken when using this option).
@@ -213,4 +259,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
-
