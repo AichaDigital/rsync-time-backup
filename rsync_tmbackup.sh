@@ -655,6 +655,39 @@ while : ; do
         fn_log_info "From: $SSH_SRC_FOLDER_PREFIX$SRC_FOLDER/"
         fn_log_info "To:   $SSH_DEST_FOLDER_PREFIX$DEST/"
 
+        # ---------------- Preflight diagnostics (common pitfalls) ----------------
+        # 1) --one-file-system prevents crossing mount points like /home when backing up from '/'
+        if echo " $RSYNC_FLAGS " | grep -q " --one-file-system"; then
+            # Only relevant when source is root '/'
+            if [ "$SSH_SRC_FOLDER_PREFIX$SRC_FOLDER" = "$SSH_SRC_FOLDER_PREFIX/" ] || [ "$SRC_FOLDER" = "/" ]; then
+                # Check if / and /home are on different filesystems on the SOURCE side
+                # Use POSIX df -P to get the device column reliably
+                ROOT_DEV=$(fn_run_cmd_src "df -P / | tail -1 | awk '{print \$1}'" 2>/dev/null)
+                HOME_DEV=$(fn_run_cmd_src "df -P /home 2>/dev/null | tail -1 | awk '{print \$1}'" 2>/dev/null)
+                if [ -n "$ROOT_DEV" ] && [ -n "$HOME_DEV" ] && [ "$ROOT_DEV" != "$HOME_DEV" ]; then
+                    fn_log_warn "Detected separate filesystem for /home ($HOME_DEV vs $ROOT_DEV) while using --one-file-system. /home will NOT be backed up. Consider using --rsync-set-flags to remove --one-file-system. See README Troubleshooting."
+                fi
+            fi
+        fi
+
+        # 2) Warn when not running as root on source and attempting to include /root
+        SRC_UID=$(fn_run_cmd_src "id -u" 2>/dev/null)
+        if [ -n "$SRC_UID" ] && [ "$SRC_UID" != "0" ]; then
+            # If backing up from '/'
+            if [ "$SSH_SRC_FOLDER_PREFIX$SRC_FOLDER" = "$SSH_SRC_FOLDER_PREFIX/" ] || [ "$SRC_FOLDER" = "/" ]; then
+                if fn_run_cmd_src "test -d /root"; then
+                    fn_log_warn "Source user UID=$SRC_UID is not root. Files under /root and other root-only paths may not be readable and thus not backed up. Run as root or adjust which paths you back up."
+                fi
+            fi
+        fi
+
+        # 3) Informative: does /backups_mysql exist on source?
+        if [ "$SSH_SRC_FOLDER_PREFIX$SRC_FOLDER" = "$SSH_SRC_FOLDER_PREFIX/" ] || [ "$SRC_FOLDER" = "/" ]; then
+            if ! fn_run_cmd_src "test -d /backups_mysql"; then
+                fn_log_info "/backups_mysql not found on source. If you expect it, verify the path or mounts."
+            fi
+        fi
+
         CMD="rsync"
         if [ -n "$SSH_CMD" ]; then
                 RSYNC_FLAGS="$RSYNC_FLAGS --compress"

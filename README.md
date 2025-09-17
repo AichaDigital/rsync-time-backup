@@ -151,6 +151,40 @@ Backup sets are automatically deleted following a simple expiration strategy def
 
 Before the first interval (i.e. by default within the first 24h) it is implied that all backup sets are kept. Additionally, if the backup destination directory is full, the oldest backups are deleted until enough space is available.
 
+## Troubleshooting: Paths not being backed up (e.g., /home, /root, /backups_mysql)
+
+If some paths you expect are missing from the backup, check the following common causes:
+
+1) Separate filesystems and the default --one-file-system
+- Symptom: Backing up from / (root) but /home is not included.
+- Cause: By default, the script includes --one-file-system, which prevents rsync from crossing mount points. On many Linux servers, /home is a separate filesystem.
+- Fix: Use --rsync-set-flags to REPLACE the defaults and remove --one-file-system. Example:
+
+```
+./rsync_tmbackup.sh --rsync-set-flags "-D --numeric-ids --links --hard-links --itemize-changes --times --recursive --stats --human-readable" \
+  user@host:/ /backup/dest /path/to/exclude.txt
+```
+
+2) Permissions when not running as root on the SOURCE
+- Symptom: /root (and sometimes /home/*) are missing or partially copied.
+- Cause: If the backup runs as a non-root user on the source side, it cannot read /root and some directories. Over SSH, this depends on the remote user (user@host:...).
+- Fix options:
+  - Run the backup as root on the source (e.g., root@host:/ ...).
+  - Or accept that some paths cannot be read; avoid including /root.
+  - For non-root backups, it’s often convenient to add: --rsync-append-flags "--no-perms --no-owner --no-group".
+
+3) The path simply doesn’t exist on the source
+- Symptom: You include + /backups_mysql/*** but nothing gets copied.
+- Cause: The directory /backups_mysql doesn’t exist or is mounted elsewhere.
+- Fix: Verify on the SOURCE server: test -d /backups_mysql
+
+4) Filter rules order
+- Symptom: Specific subpaths under excluded parents aren’t copied.
+- Cause: A broad exclusion (e.g., - /usr/***) appears before your specific includes.
+- Fix: Ensure parent directories and specific includes appear BEFORE broad excludes. See examples below.
+
+The script now prints warnings for (1) and (2) at the start of each run when applicable.
+
 ## Exclusion file
 
 An optional exclude file can be provided as a third parameter. It should be compatible with the `--exclude-from` parameter of rsync. See [this tutorial](https://web.archive.org/web/20230126121643/https://sites.google.com/site/rsync2u/home/rsync-tutorial/the-exclude-from-option) for more information.
@@ -230,6 +264,42 @@ Example 3: Typical system template (home, etc, root and some specific paths) avo
 + /etc/***
 + /root/***
 + /backups/***
+```
+
+Example 4: Variant without specific under-parent includes and using /backups_mysql
+
+```
+# First specific inclusions and their parents
+# (none; add them if you need to include subpaths under excluded parents)
+
+# Now broad system exclusions
+- /usr/***
+- /var/***
+- /proc/***
+- /sys/***
+- /dev/***
+- /tmp/***
+- /run/***
+- /mnt/***
+- /media/***
+- /cdrom/***
+- /lost+found/***
+- /snap/***
+- /opt/***
+- /srv/***
+- /boot/***
+- /bin/***
+- /sbin/***
+- /lib/***
+- /lib64/***
+- /lib32/***
+- /libx32/***
+
+# Data inclusions
++ /home/***
++ /etc/***
++ /root/***
++ /backups_mysql/***
 ```
 
 How to test that your rules work (dry-run):
