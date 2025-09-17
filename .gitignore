@@ -7,3 +7,5 @@ tests/TestSource/
 **/.DS_Store
 MY_DOC.md
 .claude/
+rsync/
+exclude.txt
