@@ -58,7 +58,7 @@ rsync_tmbackup.sh --rsync-append-flags "--no-perms --no-owner --no-group" /home 
 
 > **Note:** My full system backup strategy does not attempt a 100% restore. When I need that, I have another backup strategy where I generate metadata with the data of all the directories and files in the backup along with their original permissions and owners.
 
-# ORIGINAL PACKAGE
+## ORIGINAL PACKAGE
 This script offers Time Machine-style backup using rsync. It creates incremental backups of files and directories to the destination of your choice. The backups are structured in a way that makes it easy to recover any file at any point in time.
 
 It works on Linux, macOS and Windows (via WSL or Cygwin). The main advantage over Time Machine is the flexibility as it can backup from/to any filesystem and works on any platform. You can also backup, for example, to a Truecrypt drive without any problem.
@@ -157,49 +157,102 @@ An optional exclude file can be provided as a third parameter. It should be comp
 
 ### Include/Exclude filter files (automatic detection)
 
-This fork adds support for rsync filter files that mix include (`+`) and exclude (`-`) rules in the same file.
-
-- If the third parameter file contains lines starting with `+` or `-`, the script automatically uses:
-  - `--filter 'merge <file>'`
-- Otherwise, it falls back to classic:
-  - `--exclude-from '<file>'`
-
-This makes `+` includes work as expected without changing your command.
-
-Guidelines when using filter rules:
-
-- Order matters: rules are evaluated top-to-bottom.
-- Include parent directories before including their children.
-- Finish with a catch-all exclude to avoid unintended copies.
-
-Example: include only `/home`, `/root`, `/etc`, `/usr/local/bin`, and `/mysql_back`, exclude everything else, and skip caches and swap images:
-
-```
-- */cache/*
-+ /home/
-+ /home/**
-+ /root/
-+ /root/**
-+ /etc/
-+ /etc/**
-+ /usr/
-+ /usr/local/
-+ /usr/local/bin/
-+ /usr/local/bin/**
-- /usr/**
-+ /mysql_back/
-+ /mysql_back/**
-- /swapfile
-- /swap.img
-- /backupremote2/
-- /*
-```
-
 Usage stays the same; pass the file as the third argument:
 
 ```bash
 ./rsync_tmbackup.sh /source/path /destination/path /path/to/excludes.txt
 ```
+
+### Practical Guide: How to write exclude.txt correctly
+
+The exclude.txt file is critical. With rsync, the order of rules and the prior inclusion of parent directories make the difference between something being included in the backup or not.
+
+Fundamental rules (rsync filter rules):
+- Use `+` to INCLUDE and `-` to EXCLUDE.
+- Order matters: rsync evaluates from top to bottom, and the first match wins.
+- Include parent directories before children. If you exclude `/usr/***` and then try to include `/usr/share/zabbix/***`, rsync won't descend to `/usr/` and won't see your include. Solution: include `/usr/` and `/usr/share/` BEFORE excluding `/usr/***`.
+- End with broad exclusions (catch-all) if you want to prevent surprises.
+
+This script automatically detects if your file has lines starting with `+` or `-` and, in that case, uses `--filter 'merge <file>'`. If it doesn't detect `+`/`-`, it uses classic `--exclude-from`.
+
+Example 1: Include only `/usr/share/zabbix` when generally excluding `/usr`
+
+```
++ /usr/
++ /usr/share/
++ /usr/share/zabbix/***
+- /usr/***
+```
+
+Example 2: Include `/var/www` but exclude the rest of `/var`
+
+```
++ /var/
++ /var/www/***
+- /var/***
+```
+
+Example 3: Typical system template (home, etc, root and some specific paths) avoiding temporary mounts
+
+```
+# First specific inclusions and their parents
++ /usr/
++ /usr/share/
++ /usr/share/zabbix/***
++ /var/
++ /var/www/***
+
+# Now broad system exclusions
+- /usr/***
+- /var/***
+- /proc/***
+- /sys/***
+- /dev/***
+- /tmp/***
+- /run/***
+- /mnt/***
+- /media/***
+- /cdrom/***
+- /lost+found/***
+- /snap/***
+- /opt/***
+- /srv/***
+- /boot/***
+- /bin/***
+- /sbin/***
+- /lib/***
+- /lib64/***
+- /lib32/***
+- /libx32/***
+
+# Data inclusions
++ /home/***
++ /etc/***
++ /root/***
++ /backups/***
+```
+
+How to test that your rules work (dry-run):
+- With rsync directly (replace paths and host according to your case):
+
+```bash
+rsync -nrv --delete --numeric-ids --links --hard-links --one-file-system \
+  --filter 'merge /path/to/exclude.txt' \
+  user@host:/ /local/path/test
+```
+
+- With this script, adding test flags:
+
+```bash
+./rsync_tmbackup.sh --rsync-append-flags "-n -v" \
+  user@host:/ /local/path/destination /path/to/exclude.txt
+```
+
+Notes and common errors:
+- Don't mix a broad `- /usr/***` above your specific `+ /usr/...`. Inclusions must go FIRST.
+- Make sure to include parents: `+ /usr/` and `+ /usr/share/` before `+ /usr/share/zabbix/***`.
+- Avoid typos in patterns: for example, `+ /backups/***%` matches nothing; should be `+ /backups/***`.
+- There are no syntax differences between Linux and macOS for these rules; what matters is that paths correspond to the source tree (if you backup `/`, paths start with `/`).
 
 ## Built-in lock
 
