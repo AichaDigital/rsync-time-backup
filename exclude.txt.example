@@ -1,0 +1,45 @@
+# Exclusiones básicas
+# ============================================
+# PRIMERO: Exclusiones recursivas globales
+# (DEBEN ir ANTES de los includes con ***)
+# ============================================
+- **/vendor
+- **/node_modules
+- **/.git
+- **/cache
+
+
+# Después incluye rutas específicas antes de excluir sus padres
++ /usr/
++ /usr/share/
++ /usr/share/zabbix/***
+
+- /usr/***
+- /var/***
++ /var/www/***
+- /proc/***
+- /sys/***
+- /dev/***
+- /tmp/***
+- /run/***
+- /mnt/***
+- /media/***
+- /cdrom/***
+- /lost+found/***
+- /snap/***
+- /opt/***
+- /srv/***
+- /boot/***
+- /bin/***
+- /sbin/***
+- /lib/***
+- /lib64/***
+- /lib32/***
+- /libx32/***
+
+# Inclusiones específicas
++ /home/***
++ /etc/***
++ /root/***
++ /backups/***
++ /backups_mysql/***
