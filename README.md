@@ -96,6 +96,10 @@ On macOS, it has a few disadvantages compared to Time Machine - in particular it
 	                        After 365 days keep one backup every 30 days.
 	 --no-auto-expire       Disable automatically deleting backups when out of space. Instead an error
 	                        is logged, and the backup is aborted.
+	 -m, --max_backups N    Specify the maximum number of backups (default: 10).
+	                        After this number of backups, the script prunes older backups.
+	 --sudo                 Run rsync with sudo. Useful for backing up system files
+	                        that require root permissions.
 
 ## Features
 
