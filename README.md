@@ -213,6 +213,73 @@ Fundamental rules (rsync filter rules):
 
 This script automatically detects if your file has lines starting with `+` or `-` and, in that case, uses `--filter 'merge <file>'`. If it doesn't detect `+`/`-`, it uses classic `--exclude-from`.
 
+### Rule order: the golden rule
+
+**The first matching rule wins.** Rsync evaluates rules top-to-bottom and stops at the first match. This means:
+
+1. **Global exclusions FIRST** (patterns without leading `/` that should apply everywhere)
+2. **Parent directory inclusions** (when you need to include paths under excluded parents)
+3. **System/broad exclusions** (patterns with leading `/`)
+4. **Data inclusions LAST** (your actual data directories)
+
+### Excluding patterns everywhere (e.g., node_modules, .git)
+
+To exclude a directory like `node_modules` from ALL locations in the backup, you must place the rule **BEFORE** any inclusion that uses `***`:
+
+```
+# WRONG - node_modules will be included because /home/*** matches first
++ /home/***
+- node_modules/***
+
+# CORRECT - node_modules is excluded before /home/*** is evaluated
+- node_modules/***
++ /home/***
+```
+
+Key syntax points:
+
+| Pattern | What it excludes |
+|---------|------------------|
+| `- /node_modules/***` | Only `/node_modules` at root level |
+| `- node_modules/***` | `node_modules` at ANY level (no leading `/`) |
+| `- **/node_modules/***` | Same as above, explicit syntax |
+
+Complete example with global exclusions:
+
+```
+# ═══════════════════════════════════════════════════════════
+# FIRST: Global exclusions (patterns that apply everywhere)
+# ═══════════════════════════════════════════════════════════
+- node_modules/***
+- .git/***
+- .cache/***
+- __pycache__/***
+- *.log
+- .DS_Store
+
+# ═══════════════════════════════════════════════════════════
+# SECOND: System exclusions (with leading /)
+# ═══════════════════════════════════════════════════════════
+- /proc/***
+- /sys/***
+- /dev/***
+- /tmp/***
+- /run/***
+- /mnt/***
+- /media/***
+- /snap/***
+
+# ═══════════════════════════════════════════════════════════
+# THIRD: Data inclusions
+# ═══════════════════════════════════════════════════════════
++ /home/***
++ /etc/***
++ /root/***
++ /var/www/***
+```
+
+With this order, when rsync evaluates `/home/user/project/node_modules/`, it first matches `- node_modules/***` and excludes it before reaching `+ /home/***`.
+
 Example 1: Include only `/usr/share/zabbix` when generally excluding `/usr`
 
 ```
