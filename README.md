@@ -1,5 +1,10 @@
 ## Rsync time backup
 
+[![Tests](https://github.com/AichaDigital/rsync-time-backup/actions/workflows/tests.yml/badge.svg)](https://github.com/AichaDigital/rsync-time-backup/actions/workflows/tests.yml)
+[![ShellCheck](https://img.shields.io/badge/ShellCheck-passing-brightgreen)](https://github.com/AichaDigital/rsync-time-backup/actions/workflows/tests.yml)
+[![Bash](https://img.shields.io/badge/bash-3.2%2B-blue)](https://www.gnu.org/software/bash/)
+[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+
 **THAT IS A FORK OF [ORIGINAL PACKAGE](https://github.com/laurent22/rsync-time-backup)**
 
 **It works for me and is here for you to use if you want, but you are solely responsible for testing, verifying, and using it.**

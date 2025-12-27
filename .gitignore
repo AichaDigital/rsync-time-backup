@@ -3,6 +3,7 @@ test.sh
 *~
 tests/TestDest/
 tests/TestSource/
+tests/bats/
 .DS_Store
 **/.DS_Store
 MY_DOC.md

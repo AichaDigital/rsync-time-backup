@@ -1,0 +1,70 @@
+name: Tests
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup bats
+        run: ./tests/setup_bats.sh
+
+      - name: Run tests
+        run: ./tests/run_tests.sh
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.os }}
+          path: tests/*.bats
+          retention-days: 7
+
+  shellcheck:
+    name: ShellCheck
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run ShellCheck
+        uses: ludeeus/action-shellcheck@master
+        with:
+          scandir: '.'
+          severity: warning
+        env:
+          SHELLCHECK_OPTS: -e SC2086 -e SC2034
+
+  lint:
+    name: Bash Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check bash syntax
+        run: |
+          bash -n rsync_tmbackup.sh
+          echo "Syntax check passed!"
+
+      - name: Check script is executable
+        run: |
+          if [ ! -x rsync_tmbackup.sh ]; then
+            echo "Error: rsync_tmbackup.sh is not executable"
+            exit 1
+          fi
+          echo "Executable check passed!"
