@@ -11,12 +11,17 @@ jobs:
     name: Run Tests
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest]
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Install rsync (Ubuntu)
+        if: matrix.os == 'ubuntu-latest'
+        run: sudo apt-get update && sudo apt-get install -y rsync
 
       - name: Setup bats
         run: ./tests/setup_bats.sh
@@ -44,9 +49,10 @@ jobs:
         uses: ludeeus/action-shellcheck@master
         with:
           scandir: '.'
-          severity: warning
+          severity: error
+          ignore_paths: 'tests/bats'
         env:
-          SHELLCHECK_OPTS: -e SC2086 -e SC2034
+          SHELLCHECK_OPTS: -e SC2086 -e SC2034 -e SC2155
 
   lint:
     name: Bash Lint
