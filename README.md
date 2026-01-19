@@ -126,6 +126,18 @@ On macOS, it has a few disadvantages compared to Time Machine - in particular it
 
 ## Examples
 
+* Simple backup of a directory:
+
+		rsync_tmbackup.sh /path/to/source /path/to/destination
+
+* Backup with automatic rotation (keep only last 20 backups):
+
+		rsync_tmbackup.sh -m 20 /path/to/source /path/to/destination
+
+* Backup with custom expiration strategy (keep daily for 7 days, then weekly for 30 days):
+
+		rsync_tmbackup.sh --strategy "1:1 7:7 30:30" /path/to/source /path/to/destination
+
 * Backup the home folder to backup_drive
 
 		rsync_tmbackup.sh /home /mnt/backup_drive
